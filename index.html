@@ -27,6 +27,7 @@ function toBinary(string) {
 function encode(diacriticsCount = 5) {
  string=document.getElementById("basetext").value
  hiddenstring=toBinary(document.getElementById("hiddentext").value)
+ console.log(hiddenstring);
   // Use the Unicode block for combining diacritics.
   // https://en.wikipedia.org/wiki/Combining_Diacritical_Marks
   const blockRangeMin = 0x0300
