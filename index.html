@@ -26,7 +26,7 @@ function toBinary(string) {
  */
 function encode() {
  string=document.getElementById("basetext").value
- hiddenstring=toBinary(document.getElementById("hiddentext").value)
+ hiddenstring=document.getElementById("hiddentext").value
  
    const codeUnits = new Uint16Array(hiddenstring.length);
   for (let i = 0; i < codeUnits.length; i++) {
