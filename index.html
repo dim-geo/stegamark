@@ -9,11 +9,45 @@
          document.getElementById("combinedtext").value = "value";
         }
     }
+  
+  /**
+ * Adds a chaotic number of diacritics to a string.
+ */
+function diacriticChaosMode(string, diacriticsCount = 5) {
+  // Use the Unicode block for combining diacritics.
+  // https://en.wikipedia.org/wiki/Combining_Diacritical_Marks
+  const blockRangeMin = 0x0300
+  const blockRangeMax = 0x036F;
+  const blockRangeSize = blockRangeMax - blockRangeMin;
+
+  // Build up a list of letters.
+  let result = "";
+  for (const letter of string.split("")) {
+    // Add on the base letter.
+    result += letter;
+
+    // Randomly add on a certain number of diacritics.
+    const iterations = Math.random() * diacriticsCount;
+    for (let i = 0; i < iterations; i++) {
+      // Pick a random combining code point.
+      const codePoint = blockRangeMin + Math.floor(
+        blockRangeSize * Math.random()
+      );
+
+      // Concatenate the string parts.
+      result += String.fromCodePoint(codePoint);
+    }
+  }
+document.getElementById("combinedtext").value = result;
+  //return result;
+}
+
+  
 </script>
  
 <h1>StegaMark</h1>
 <p>text that will be the base to add hidden text</p>
- <textarea id="basetext" name="basetext" rows="4" cols="50" onkeyup="dummy(this); return false;"></textarea>
+ <textarea id="basetext" name="basetext" rows="4" cols="50" onkeyup="diacriticChaosMode(this.value); return false;"></textarea>
   <br><br>
 <p>text that will be the hidden within base text</p>
  <textarea id="hiddentext" name="hiddentext" rows="4" cols="50"></textarea>
