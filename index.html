@@ -13,7 +13,8 @@
   /**
  * Adds a chaotic number of diacritics to a string.
  */
-function diacriticChaosMode(string, diacriticsCount = 5) {
+function encode(diacriticsCount = 5) {
+ string=document.getElementById("basetext").value
   // Use the Unicode block for combining diacritics.
   // https://en.wikipedia.org/wiki/Combining_Diacritical_Marks
   const blockRangeMin = 0x0300
@@ -47,10 +48,10 @@ document.getElementById("combinedtext").value = result;
  
 <h1>StegaMark</h1>
 <p>text that will be the base to add hidden text</p>
- <textarea id="basetext" name="basetext" rows="4" cols="50" onkeyup="diacriticChaosMode(this.value); return false;"></textarea>
+ <textarea id="basetext" name="basetext" rows="4" cols="50" onkeyup="encode(); return false;"></textarea>
   <br><br>
 <p>text that will be the hidden within base text</p>
- <textarea id="hiddentext" name="hiddentext" rows="4" cols="50"></textarea>
+ <textarea id="hiddentext" name="hiddentext" rows="4" cols="50" onkeyup="encode(); return false;"></textarea>
   <br><br>
 <p>combined text</p>
  <textarea id="combinedtext" name="combinedtext" rows="4" cols="50"></textarea>
