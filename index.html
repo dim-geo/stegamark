@@ -27,24 +27,29 @@ function toBinary(string) {
 function encode() {
  string=document.getElementById("basetext").value
  hiddenstring=toBinary(document.getElementById("hiddentext").value)
- console.log(hiddenstring);
+ 
+   const codeUnits = new Uint16Array(hiddenstring.length);
+  for (let i = 0; i < codeUnits.length; i++) {
+    codeUnits[i] = hiddenstring.charCodeAt(i);
+  }
+  const charCodes = new Uint8Array(codeUnits.buffer);
+
+ 
+ 
   // Use the Unicode block for combining diacritics.
   // https://en.wikipedia.org/wiki/Combining_Diacritical_Marks
   const blockRangeMin = 0x0300
-  const blockRangeMax = 0x036F;
+  //const blockRangeMax = 0x036F;
   //const blockRangeSize = blockRangeMax - blockRangeMin;
 
   // Build up a list of letters.
   let result = "";
-  let k=0;
- 
- for (const letter of hiddenstring.split(""){
-  const codeletter=letter.charCodeAt(0);
-  const base112=parseInt(codeletter,112);
-  for (const base112letter of base112.split(""){
-   const codePoint = blockRangeMin+base112letter;
-   result +='a';
-   result += String.fromCodePoint(codePoint);
+  for (let i = 0; i < charCodes.byteLength; i++) {
+    const base112=parseInt(charCodes[i],112);
+    for (const base112letter of base112.split(""){
+     const codePoint = blockRangeMin+base112letter;
+     result +='a';
+     result += String.fromCodePoint(codePoint);
   }
  }
  
