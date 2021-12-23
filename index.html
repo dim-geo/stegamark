@@ -24,7 +24,7 @@ function toBinary(string) {
   /**
  * encode via diacritics
  */
-function encode(diacriticsCount = 5) {
+function encode() {
  string=document.getElementById("basetext").value
  hiddenstring=toBinary(document.getElementById("hiddentext").value)
  console.log(hiddenstring);
@@ -32,34 +32,23 @@ function encode(diacriticsCount = 5) {
   // https://en.wikipedia.org/wiki/Combining_Diacritical_Marks
   const blockRangeMin = 0x0300
   const blockRangeMax = 0x036F;
-  const blockRangeSize = blockRangeMax - blockRangeMin;
+  //const blockRangeSize = blockRangeMax - blockRangeMin;
 
   // Build up a list of letters.
   let result = "";
   let k=0;
-  for (const letter of string.split("")) {
-    // Add on the base letter.
-    result += letter;
-
-    // Randomly add on a certain number of diacritics.
-    //const iterations = Math.random() * diacriticsCount;
-    for (let i = 0; i < 3; i++) {
-     if ( hiddenstring.length < k+i+1) {
-      const codePoint = blockRangeMin+ hiddenstring.charCodeAt(k+i);
-      }else{
-       const codePoint = blockRangeMin;
-      }
-      // Pick a random combining code point.
-      //const codePoint = blockRangeMin + Math.floor(
-      //  blockRangeSize * Math.random()
-      //);
-
-      // Concatenate the string parts.
-      result += String.fromCodePoint(codePoint);
-    }
-      k+=3;
+ 
+ for (const letter of hiddenstring.split(""){
+  const codeletter=letter.charCodeAt(0);
+  const base112=parseInt(codeletter,112);
+  for (const base112letter of base112.split(""){
+   const codePoint = blockRangeMin+base112letter;
+   result +='a';
+   result += String.fromCodePoint(codePoint);
   }
-document.getElementById("combinedtext").value = result+hiddenstring;
+ }
+ 
+document.getElementById("combinedtext").value = result;
   //return result;
 }
 
