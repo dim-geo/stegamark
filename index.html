@@ -4,19 +4,22 @@
  <script>
 
   
+ <script>
+
   /**
  * encode via diacritics
  */
 function encode() {
- string=document.getElementById("basetext").value
- hiddenstring=document.getElementById("hiddentext").value
+ string=document.getElementById("basetext").value//.normalize("NFD")
+ hiddenstring=document.getElementById("hiddentext").value//.normalize("NFD")
  
  //Convert hidden text to array of bytes
- 
-  const codeUnits = new Uint16Array(hiddenstring.length);
-  for (let i = 0; i < codeUnits.length; i++) {
-    codeUnits[i] = hiddenstring.charCodeAt(i);
-  }
+ const codeUnits = new Uint16Array(hiddenstring.length);
+ i=0;
+ for (let codePoint of hiddenstring) {
+   //console.log(codePoint.codePointAt(0));
+   codeUnits[i++] =codePoint.codePointAt(0);
+} 
   const charCodes = new Uint8Array(codeUnits.buffer);
 
  
@@ -27,78 +30,89 @@ function encode() {
   // Build up a list of letters.
   let result = "";
   var chararray = [];
+  let k=0
   for (let i = 0; i < charCodes.byteLength; i++) {
      chararray[i]=charCodes[i];
      const quotient = Math.floor(charCodes[i]/112);
      const remainder = charCodes[i] % 112;
-     console.log(quotient);
-     console.log(remainder);
+     //console.log(quotient);
+     //console.log(remainder);
      const codePoint1 = blockRangeMin+quotient;
      const codePoint2 = blockRangeMin+remainder;
-     if (i < string.length){
-       result +=string.charAt(i);
+     if (k < string.length){
+       result +=string.charAt(k++);
      }else{
        result+='a';
      }
      result += String.fromCodePoint(codePoint1);
-     result+='a';
+     if (k < string.length){
+       result +=string.charAt(k++);
+     }else{
+       result+='a';
+     }
      result += String.fromCodePoint(codePoint2);
  }
-   console.log(chararray);
-   console.log(result.normalize("NFD"));
+   //console.log(chararray);
+   //console.log(result.normalize("NFD").length);
  document.getElementById("combinedtext").value = result;
 }
 
 function decode(){
   const encodedtext=document.getElementById("combinedtext").value
-  const normalized=encodedtext.normalize("NFD")
-  console.log(normalized);
+  const normalized=encodedtext//.normalize("NFD")
   let hiddentext=''
   let basetext=''
-  //const codeUnits = new Uint16Array(normalized.length);
-  //  console.log(normalized.length)
-  var chararray = [];
-  let k=0;
-  for (let i = 0; i < normalized.length; i++) {
-    charcode = normalized.charCodeAt(i);
-    console.log(charcode);
-    if ( charcode <= 0x036F && charcode >= 0x0300){
-      //console.log(charcode);
-      chararray[k]=charcode-0x0300;
-      k+=1;
-      //hiddentext+='a'
+  const codeUnits = new Uint16Array();
+ let k=0;
+ var chararray = [];
+ let j=0;
+ for (let i = 0; i < normalized.length; i++) {
+        const numericCodePoint = normalized.codePointAt(i);
+        //if (numericCodePoint !== normalized[i].codePointAt(0)) {
+          // This is high/low surrogate. Skip the low surrogate.
+          //i++;
+        //}
+    codeUnits[k++] =numericCodePoint;
+    //console.log(numericCodePoint);
+    if ( numericCodePoint <= 0x036F && numericCodePoint >= 0x0300){
+      chararray[j++]=numericCodePoint-0x0300;
     }else{
-      basetext+=normalized.charAt(i);
+    basetext+=normalized.charAt(i);
     }
-  }
-  console.log(chararray);
-  let truhiddentext=''
-  const bytes = new Uint8Array(chararray.length/2);
-  for (let i=0; i<chararray.length/2;i++){
+}
+  let bytes = new Uint8Array(chararray.length/2);
+  j=0;
+  for (let i=0; i<chararray.length;i+=2){
     charcode1 = chararray[i];
     charcode2 = chararray[i+1];
-    bytes[i]=charcode1*112+charcode2;
+    bytes[j++]=charcode1*112+charcode2;
   }
+  
   const charCodes = new Uint16Array(bytes.buffer);
   for (let i = 0; i < charCodes.length; i++) {
-    truhiddentext += String.fromCharCode(charCodes[i]);
+    hiddentext += String.fromCodePoint(charCodes[i]);
   }
   document.getElementById("basetext").value=basetext
-  document.getElementById("hiddentext").value=truhiddentext
+  document.getElementById("hiddentext").value=hiddentext
+//console.log(chararray);
+//console.log(bytes);
 }
   
 </script>
  
 <h1>StegaMark</h1>
-<p>text that will be the base to add hidden text</p>
+ <p>This simple javascript program can be used to hide text/data within diacritics marks of Unicode. This is not an encryption by any means.</p>
+ 
+<p>Text that will be the base to add hidden text. If the length is not enough, 'a' will be used.</p>
  <textarea id="basetext" name="basetext" rows="4" cols="50" onkeyup="encode(); return false;"></textarea>
   <br><br>
-<p>text that will be the hidden within base text</p>
+<p>Text that will be hidden within base text. This is the secret message that you want to send. Please encrypt, do not send plaintext.</p>
  <textarea id="hiddentext" name="hiddentext" rows="4" cols="50" onkeyup="encode(); return false;"></textarea>
   <br><br>
-<p>combined text</p>
+<p>Combined text. This is the combined, hidden and base text. In order to decode a message just paste your combined text here.</p>
  <textarea id="combinedtext" name="combinedtext" rows="4" cols="50" onkeyup="decode(); return false;"></textarea>
   <br><br>
+
 
 </body>
 </html> 
