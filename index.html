@@ -2,14 +2,51 @@
 <html>
 <body>
  
- <script>
+<script>
 
-  /**
- * encode via diacritics
- */
+function calculate_codes(){
+
+const alphabet="=+/0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,'\"";
+
+let a=0;
+var codes = [];
+let j=0;
+for (let i=0x0300; i<=0x036F;i++){
+for (const c of alphabet) {
+    //console.log(c);
+    let text=c+String.fromCodePoint(i);
+    //console.log(text);
+    let normal1=text.normalize();
+    let normal2=text.normalize("NFD");
+    if(normal1.length != normal2.length){
+      a=1;
+      break;
+    }
+
+}
+
+  if(a==0){
+    //console.log(i);
+    codes[j++]=i;
+  }else{
+    a=0;
+  }
+
+}
+
+//console.log(codes);
+//console.log(codes.length);
+return codes;
+}
+
+
+
 function encode() {
- string=document.getElementById("basetext").value//.normalize("NFD")
- hiddenstring=document.getElementById("hiddentext").value//.normalize("NFD")
+
+const specialcodes=calculate_codes();
+
+ string=document.getElementById("basetext").value.normalize("NFD")
+ hiddenstring=document.getElementById("hiddentext").value.normalize("NFD")
  
  //Convert hidden text to array of bytes
  const codeUnits = new Uint16Array(hiddenstring.length);
@@ -31,12 +68,12 @@ function encode() {
   let k=0
   for (let i = 0; i < charCodes.byteLength; i++) {
      chararray[i]=charCodes[i];
-     const quotient = Math.floor(charCodes[i]/112);
-     const remainder = charCodes[i] % 112;
+     const quotient = Math.floor(charCodes[i]/specialcodes.length);
+     const remainder = charCodes[i] % specialcodes.length;
      //console.log(quotient);
      //console.log(remainder);
-     const codePoint1 = blockRangeMin+quotient;
-     const codePoint2 = blockRangeMin+remainder;
+     const codePoint1 = specialcodes[quotient];
+     const codePoint2 = specialcodes[remainder];
      if (k < string.length){
        result +=string.charAt(k++);
      }else{
@@ -57,7 +94,8 @@ function encode() {
 
 function decode(){
   const encodedtext=document.getElementById("combinedtext").value
-  const normalized=encodedtext//.normalize("NFD")
+  const normalized=encodedtext.normalize("NFD")
+  const specialcodes=calculate_codes();
   let hiddentext=''
   let basetext=''
   const codeUnits = new Uint16Array();
@@ -73,7 +111,7 @@ function decode(){
     codeUnits[k++] =numericCodePoint;
     //console.log(numericCodePoint);
     if ( numericCodePoint <= 0x036F && numericCodePoint >= 0x0300){
-      chararray[j++]=numericCodePoint-0x0300;
+      chararray[j++]=numericCodePoint;
     }else{
     basetext+=normalized.charAt(i);
     }
@@ -81,9 +119,9 @@ function decode(){
   let bytes = new Uint8Array(chararray.length/2);
   j=0;
   for (let i=0; i<chararray.length;i+=2){
-    charcode1 = chararray[i];
-    charcode2 = chararray[i+1];
-    bytes[j++]=charcode1*112+charcode2;
+    charcode1 = specialcodes.indexOf(chararray[i]);
+    charcode2 = specialcodes.indexOf(chararray[i+1]);
+    bytes[j++]=charcode1*specialcodes.length+charcode2;
   }
   
   const charCodes = new Uint16Array(bytes.buffer);
@@ -96,21 +134,25 @@ function decode(){
 //console.log(bytes);
 }
   
+
+
 </script>
- 
+
+
 <h1>StegaMark</h1>
  <p>This simple javascript program can be used to hide text/data within diacritics marks of Unicode. This is not an encryption by any means.</p>
  
-<p>Text that will be the base to add hidden text. If the length is not enough, 'a' will be used.</p>
+<p>Text that will be the base to add hidden text. If the length is not enough, 'a' will be used as padding. Please use only English alphabet and limited punctuation.
+ Many sites will do normalization that will mess up this staganography, if you don't stick to English alphabet</p>
  <textarea id="basetext" name="basetext" rows="4" cols="50" onkeyup="encode(); return false;"></textarea>
   <br><br>
-<p>Text that will be hidden within base text. This is the secret message that you want to send. Please encrypt, do not send plaintext.</p>
+<p>Text that will be hidden within base text. This is the secret message that you want to send. Please encrypt, do not send plaintext. You can use any unicode character here.</p>
  <textarea id="hiddentext" name="hiddentext" rows="4" cols="50" onkeyup="encode(); return false;"></textarea>
   <br><br>
 <p>Combined text. This is the combined, hidden and base text. In order to decode a message just paste your combined text here.</p>
  <textarea id="combinedtext" name="combinedtext" rows="4" cols="50" onkeyup="decode(); return false;"></textarea>
   <br><br>
-
+  
 
 </body>
 </html> 
