@@ -2,24 +2,9 @@
 <html>
 <body>
 
- 
+  
  <script>
 
-// convert a Unicode string to a string in which
-// each 16-bit unit occupies only one byte
-function toBinary(string) {
-  const codeUnits = new Uint16Array(string.length);
-  for (let i = 0; i < codeUnits.length; i++) {
-    codeUnits[i] = string.charCodeAt(i);
-  }
-  const charCodes = new Uint8Array(codeUnits.buffer);
-  let result = '';
-  for (let i = 0; i < charCodes.byteLength; i++) {
-    result += String.fromCharCode(charCodes[i]);
-  }
-  return result;
-}  
-  
   
   /**
  * encode via diacritics
@@ -28,29 +13,31 @@ function encode() {
  string=document.getElementById("basetext").value
  hiddenstring=document.getElementById("hiddentext").value
  
-   const codeUnits = new Uint16Array(hiddenstring.length);
+ //Convert hidden text to array of bytes
+ 
+  const codeUnits = new Uint16Array(hiddenstring.length);
   for (let i = 0; i < codeUnits.length; i++) {
     codeUnits[i] = hiddenstring.charCodeAt(i);
   }
   const charCodes = new Uint8Array(codeUnits.buffer);
 
  
- 
   // Use the Unicode block for combining diacritics.
   // https://en.wikipedia.org/wiki/Combining_Diacritical_Marks
   const blockRangeMin = 0x0300
-  //const blockRangeMax = 0x036F;
-  //const blockRangeSize = blockRangeMax - blockRangeMin;
 
   // Build up a list of letters.
   let result = "";
   for (let i = 0; i < charCodes.byteLength; i++) {
-    const base112=parseInt(charCodes[i],112);
-    for (const base112letter of base112.split(""){
-     const codePoint = blockRangeMin+base112letter;
-     result +='a';
-     result += String.fromCodePoint(codePoint);
-  }
+  //console.log(charCodes[i]);
+    const quotient = Math.floor(charCodes[i]/112);
+    const remainder = charCodes[i] % 112;
+     const codePoint1 = blockRangeMin+quotient;
+     const codePoint2 = blockRangeMin+remainder;
+     result +=string.charAt(i);
+     console.log(string.charAt(i));
+     result += String.fromCodePoint(codePoint1);
+     result += String.fromCodePoint(codePoint2);
  }
  
 document.getElementById("combinedtext").value = result;
