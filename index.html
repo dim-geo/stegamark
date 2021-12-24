@@ -1,8 +1,6 @@
  <!DOCTYPE html>
 <html>
 <body>
-
-  
  <script>
 
   
@@ -28,22 +26,66 @@ function encode() {
 
   // Build up a list of letters.
   let result = "";
+  var chararray = [];
   for (let i = 0; i < charCodes.byteLength; i++) {
-  //console.log(charCodes[i]);
-    const quotient = Math.floor(charCodes[i]/112);
-    const remainder = charCodes[i] % 112;
+     chararray[i]=charCodes[i];
+     const quotient = Math.floor(charCodes[i]/112);
+     const remainder = charCodes[i] % 112;
+     console.log(quotient);
+     console.log(remainder);
      const codePoint1 = blockRangeMin+quotient;
      const codePoint2 = blockRangeMin+remainder;
-     result +=string.charAt(i);
-     console.log(string.charAt(i));
+     if (i < string.length){
+       result +=string.charAt(i);
+     }else{
+       result+='a';
+     }
      result += String.fromCodePoint(codePoint1);
+     result+='a';
      result += String.fromCodePoint(codePoint2);
  }
- 
-document.getElementById("combinedtext").value = result;
-  //return result;
+   console.log(chararray);
+   console.log(result.normalize("NFD"));
+ document.getElementById("combinedtext").value = result;
 }
 
+function decode(){
+  const encodedtext=document.getElementById("combinedtext").value
+  const normalized=encodedtext.normalize("NFD")
+  console.log(normalized);
+  let hiddentext=''
+  let basetext=''
+  //const codeUnits = new Uint16Array(normalized.length);
+  //  console.log(normalized.length)
+  var chararray = [];
+  let k=0;
+  for (let i = 0; i < normalized.length; i++) {
+    charcode = normalized.charCodeAt(i);
+    console.log(charcode);
+    if ( charcode <= 0x036F && charcode >= 0x0300){
+      //console.log(charcode);
+      chararray[k]=charcode-0x0300;
+      k+=1;
+      //hiddentext+='a'
+    }else{
+      basetext+=normalized.charAt(i);
+    }
+  }
+  console.log(chararray);
+  let truhiddentext=''
+  const bytes = new Uint8Array(chararray.length/2);
+  for (let i=0; i<chararray.length/2;i++){
+    charcode1 = chararray[i];
+    charcode2 = chararray[i+1];
+    bytes[i]=charcode1*112+charcode2;
+  }
+  const charCodes = new Uint16Array(bytes.buffer);
+  for (let i = 0; i < charCodes.length; i++) {
+    truhiddentext += String.fromCharCode(charCodes[i]);
+  }
+  document.getElementById("basetext").value=basetext
+  document.getElementById("hiddentext").value=truhiddentext
+}
   
 </script>
  
@@ -55,7 +97,7 @@ document.getElementById("combinedtext").value = result;
  <textarea id="hiddentext" name="hiddentext" rows="4" cols="50" onkeyup="encode(); return false;"></textarea>
   <br><br>
 <p>combined text</p>
- <textarea id="combinedtext" name="combinedtext" rows="4" cols="50"></textarea>
+ <textarea id="combinedtext" name="combinedtext" rows="4" cols="50" onkeyup="decode(); return false;"></textarea>
   <br><br>
 
 </body>
