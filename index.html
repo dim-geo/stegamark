@@ -4,155 +4,180 @@
  
 <script>
 
-function calculate_codes(){
+// try to see if any of the special unicode characters is affected by normalization
+  function calculate_codes() {
 
-const alphabet="=+/0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,'\"";
+    const alphabet = "=+/0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,'\"";
 
-let a=0;
-var codes = [];
-let j=0;
-for (let i=0x0300; i<=0x036F;i++){
-for (const c of alphabet) {
-    //console.log(c);
-    let text=c+String.fromCodePoint(i);
-    //console.log(text);
-    let normal1=text.normalize();
-    let normal2=text.normalize("NFD");
-    if(normal1.length != normal2.length){
-      a=1;
-      break;
+    let a = 0;
+    var codes = [];
+    let j = 0;
+
+    for (let i = 0xFE00; i <= 0xFE0F; i++) {
+      for (const c of alphabet) {
+        //console.log(c);
+        let text = c + String.fromCodePoint(i) + c;
+        //console.log(text);
+        let normal1 = text.normalize();
+        let normal2 = text.normalize("NFD");
+        if (normal1.length != normal2.length) {
+          a = 1;
+          break;
+        }
+
+      }
+
+      if (a == 0) {
+        //console.log(i);
+        codes[j++] = i;
+      } else {
+        a = 0;
+      }
+
     }
 
-}
+    for (let i = 0xE0100; i <= 0xE01EF; i++) {
+      for (const c of alphabet) {
+        //console.log(c);
+        let text = c + String.fromCodePoint(i) + c;
+        //console.log(text);
+        let normal1 = text.normalize();
+        let normal2 = text.normalize("NFD");
+        if (normal1.length != normal2.length) {
+          a = 1;
+          break;
+        }
 
-  if(a==0){
-    //console.log(i);
-    codes[j++]=i;
-  }else{
-    a=0;
-  }
+      }
 
-}
+      if (a == 0) {
+        //console.log(i);
+        codes[j++] = i;
+      } else {
+        a = 0;
+      }
 
-//console.log(codes);
-//console.log(codes.length);
-return codes;
-}
-
-
-
-function encode() {
-
-const specialcodes=calculate_codes();
-
- string=document.getElementById("basetext").value.normalize("NFD")
- hiddenstring=document.getElementById("hiddentext").value.normalize("NFD")
- 
- //Convert hidden text to array of bytes
- const codeUnits = new Uint16Array(hiddenstring.length);
- i=0;
- for (let codePoint of hiddenstring) {
-   //console.log(codePoint.codePointAt(0));
-   codeUnits[i++] =codePoint.codePointAt(0);
-} 
-  const charCodes = new Uint8Array(codeUnits.buffer);
-
- 
-  // Use the Unicode block for combining diacritics.
-  // https://en.wikipedia.org/wiki/Combining_Diacritical_Marks
-  const blockRangeMin = 0x0300
-
-  // Build up a list of letters.
-  let result = "";
-  var chararray = [];
-  let k=0
-  for (let i = 0; i < charCodes.byteLength; i++) {
-     chararray[i]=charCodes[i];
-     const quotient = Math.floor(charCodes[i]/specialcodes.length);
-     const remainder = charCodes[i] % specialcodes.length;
-     //console.log(quotient);
-     //console.log(remainder);
-     const codePoint1 = specialcodes[quotient];
-     const codePoint2 = specialcodes[remainder];
-     if (k < string.length){
-       result +=string.charAt(k++);
-     }else{
-       result+='a';
-     }
-     result += String.fromCodePoint(codePoint1);
-     if (k < string.length){
-       result +=string.charAt(k++);
-     }else{
-       result+='a';
-     }
-     result += String.fromCodePoint(codePoint2);
- }
-   //console.log(chararray);
-   //console.log(result.normalize("NFD").length);
- document.getElementById("combinedtext").value = result;
-}
-
-function decode(){
-  const encodedtext=document.getElementById("combinedtext").value
-  const normalized=encodedtext.normalize("NFD")
-  const specialcodes=calculate_codes();
-  let hiddentext=''
-  let basetext=''
-  const codeUnits = new Uint16Array();
- let k=0;
- var chararray = [];
- let j=0;
- for (let i = 0; i < normalized.length; i++) {
-        const numericCodePoint = normalized.codePointAt(i);
-        //if (numericCodePoint !== normalized[i].codePointAt(0)) {
-          // This is high/low surrogate. Skip the low surrogate.
-          //i++;
-        //}
-    codeUnits[k++] =numericCodePoint;
-    //console.log(numericCodePoint);
-    if ( numericCodePoint <= 0x036F && numericCodePoint >= 0x0300){
-      chararray[j++]=numericCodePoint;
-    }else{
-    basetext+=normalized.charAt(i);
     }
-}
-  let bytes = new Uint8Array(chararray.length/2);
-  j=0;
-  for (let i=0; i<chararray.length;i+=2){
-    charcode1 = specialcodes.indexOf(chararray[i]);
-    charcode2 = specialcodes.indexOf(chararray[i+1]);
-    bytes[j++]=charcode1*specialcodes.length+charcode2;
+    console.log(codes);
+    console.log(codes.length);
+    return codes;
   }
-  
-  const charCodes = new Uint16Array(bytes.buffer);
-  for (let i = 0; i < charCodes.length; i++) {
-    hiddentext += String.fromCodePoint(charCodes[i]);
-  }
-  document.getElementById("basetext").value=basetext
-  document.getElementById("hiddentext").value=hiddentext
-//console.log(chararray);
-//console.log(bytes);
-}
-  
 
+
+//hide bytes within special unicode letters
+  function encode() {
+
+    const specialcodes = calculate_codes();
+
+    string = document.getElementById("basetext").value.normalize("NFD")
+    hiddenstring = document.getElementById("hiddentext").value.normalize("NFD")
+
+    //Convert hidden text to array of bytes
+    const codeUnits = new Uint16Array(hiddenstring.length);
+    i = 0;
+    for (let codePoint of hiddenstring) {
+      //console.log(codePoint.codePointAt(0));
+      codeUnits[i++] = codePoint.codePointAt(0);
+    }
+    const charCodes = new Uint8Array(codeUnits.buffer);
+
+
+    // Build up a list of letters.
+    let result = "";
+    var chararray = [];
+    let k = 0
+    for (let i = 0; i < charCodes.byteLength; i++) {
+      chararray[i] = charCodes[i];
+      //const quotient = Math.floor(charCodes[i] / specialcodes.length);
+      const remainder = charCodes[i] // % specialcodes.length;
+      //console.log(quotient);
+      //console.log(remainder);
+      //const codePoint1 = specialcodes[quotient];
+      const codePoint2 = specialcodes[remainder];
+      if (k < string.length) {
+        result += string.charAt(k++);
+      } else {
+        result += 'a';
+      }
+      //result += String.fromCodePoint(codePoint1);
+      //if (k < string.length) {
+      //  result += string.charAt(k++);
+      //} else {
+      //  result += 'a';
+      //}
+      result += String.fromCodePoint(codePoint2);
+    }
+    for (k = k; k < string.length; k++) {
+      result += string.charAt(k);
+    }
+    //console.log(chararray);
+    //console.log(result.normalize("NFD").length);
+    document.getElementById("combinedtext").value = result;
+  }
+
+//decode it
+
+  function decode() {
+    const encodedtext = document.getElementById("combinedtext").value
+    const normalized = encodedtext.normalize("NFD")
+    const specialcodes = calculate_codes();
+    let hiddentext = ''
+    let basetext = ''
+    const codeUnits = new Uint16Array();
+    let k = 0;
+    var chararray = [];
+    let j = 0;
+    for (let i = 0; i < normalized.length; i++) {
+      const numericCodePoint = normalized.codePointAt(i);
+      //if (numericCodePoint !== normalized[i].codePointAt(0)) {
+      // This is high/low surrogate. Skip the low surrogate.
+      //i++;
+      //}
+      codeUnits[k++] = numericCodePoint;
+      //console.log(numericCodePoint);
+      if (numericCodePoint <= 0xFE0F && numericCodePoint >= 0xFE00) {
+        chararray[j++] = numericCodePoint;
+      } else if (numericCodePoint <= 0xE01EF && numericCodePoint >= 0xE0100) {
+        chararray[j++] = numericCodePoint;
+      } else {
+        basetext += normalized.charAt(i);
+      }
+    }
+    let bytes = new Uint8Array(chararray.length);
+    j = 0;
+    for (let i = 0; i < chararray.length; i++) {
+      charcode1 = specialcodes.indexOf(chararray[i]);
+      //charcode2 = specialcodes.indexOf(chararray[i + 1]);
+      bytes[j++] = charcode1 //* specialcodes.length + charcode2;
+    }
+
+    const charCodes = new Uint16Array(bytes.buffer);
+    for (let i = 0; i < charCodes.length; i++) {
+      hiddentext += String.fromCodePoint(charCodes[i]);
+    }
+    document.getElementById("basetext").value = basetext
+    document.getElementById("hiddentext").value = hiddentext
+    //console.log(chararray);
+    //console.log(bytes);
+  }
 
 </script>
 
 
 <h1>StegaMark</h1>
- <p>This simple javascript program can be used to hide text/data within diacritics marks of Unicode. This is not an encryption by any means.</p>
- 
+<p>This simple javascript program can be used to hide text/data within diacritics marks of Unicode. This is not an encryption by any means.</p>
+
 <p>Text that will be the base to add hidden text. If the length is not enough, 'a' will be used as padding. Please use only English alphabet and limited punctuation.
- Many sites will do normalization that will mess up this staganography, if you don't stick to English alphabet</p>
- <textarea id="basetext" name="basetext" rows="4" cols="50" onkeyup="encode(); return false;"></textarea>
-  <br><br>
+  Many sites will do normalization that will mess up this staganography, if you don't stick to English alphabet</p>
+<textarea id="basetext" name="basetext" rows="4" cols="50" onkeyup="encode(); return false;"></textarea>
+<br><br>
 <p>Text that will be hidden within base text. This is the secret message that you want to send. Please encrypt, do not send plaintext. You can use any unicode character here.</p>
- <textarea id="hiddentext" name="hiddentext" rows="4" cols="50" onkeyup="encode(); return false;"></textarea>
-  <br><br>
+<textarea id="hiddentext" name="hiddentext" rows="4" cols="50" onkeyup="encode(); return false;"></textarea>
+<br><br>
 <p>Combined text. This is the combined, hidden and base text. In order to decode a message just paste your combined text here.</p>
- <textarea id="combinedtext" name="combinedtext" rows="4" cols="50" onkeyup="decode(); return false;"></textarea>
-  <br><br>
-  
+<textarea id="combinedtext" name="combinedtext" rows="4" cols="50" onkeyup="decode(); return false;"></textarea>
+<br><br>
+
 
 </body>
 </html> 
